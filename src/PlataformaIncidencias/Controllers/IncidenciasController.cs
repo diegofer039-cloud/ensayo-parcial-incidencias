@@ -3,12 +3,13 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using PlataformaIncidencias.Data;
 using PlataformaIncidencias.Models;
+using PlataformaIncidencias.Services;
 
 namespace PlataformaIncidencias.Controllers;
 
 [Authorize]
 [Route("Operaciones/Incidencias")]
-public class IncidenciasController(ApplicationDbContext db) : Controller
+public class IncidenciasController(ApplicationDbContext db, ICacheListado cache) : Controller
 {
     private async Task<IReadOnlyList<Incidencia>> ListarAbiertasAsync(CancellationToken cancellationToken) =>
         await db.Incidencias
@@ -20,7 +21,10 @@ public class IncidenciasController(ApplicationDbContext db) : Controller
     [HttpGet("")]
     public async Task<IActionResult> Index(CancellationToken cancellationToken)
     {
-        var listado = await ListarAbiertasAsync(cancellationToken);
+        var listado = await cache.ObtenerAbiertasAsync(
+            token => ListarAbiertasAsync(token),
+            cancellationToken);
+
         return View(listado);
     }
 
@@ -37,6 +41,8 @@ public class IncidenciasController(ApplicationDbContext db) : Controller
         incidencia.Estado = EstadoIncidencia.Cerrada;
         incidencia.FechaCierre = DateTime.UtcNow;
         await db.SaveChangesAsync(cancellationToken);
+
+        await cache.InvalidarAsync(cancellationToken);
 
         return RedirectToAction(nameof(Index));
     }
