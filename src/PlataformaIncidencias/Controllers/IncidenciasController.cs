@@ -3,12 +3,13 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using PlataformaIncidencias.Data;
 using PlataformaIncidencias.Models;
+using PlataformaIncidencias.Services;
 
 namespace PlataformaIncidencias.Controllers;
 
 [Authorize]
 [Route("Operaciones/Incidencias")]
-public class IncidenciasController(ApplicationDbContext db) : Controller
+public class IncidenciasController(ApplicationDbContext db, IBuscadorIncidencias buscador) : Controller
 {
     private async Task<IReadOnlyList<Incidencia>> ListarAbiertasAsync(CancellationToken cancellationToken) =>
         await db.Incidencias
@@ -18,10 +19,23 @@ public class IncidenciasController(ApplicationDbContext db) : Controller
             .ToListAsync(cancellationToken);
 
     [HttpGet("")]
-    public async Task<IActionResult> Index(CancellationToken cancellationToken)
+    public async Task<IActionResult> Index(string? q, CancellationToken cancellationToken)
     {
-        var listado = await ListarAbiertasAsync(cancellationToken);
-        return View(listado);
+        if (string.IsNullOrWhiteSpace(q))
+        {
+            var listado = await ListarAbiertasAsync(cancellationToken);
+            return View(listado);
+        }
+
+        var ids = await buscador.BuscarIdsAsync(q, cancellationToken);
+        var encontradas = await db.Incidencias
+            .Where(i => ids.Contains(i.Id) && i.Estado == EstadoIncidencia.Abierta)
+            .OrderBy(i => i.Fecha)
+            .ThenBy(i => i.Id)
+            .ToListAsync(cancellationToken);
+
+        ViewData["q"] = q;
+        return View(encontradas);
     }
 
     [HttpPost("cerrar")]
