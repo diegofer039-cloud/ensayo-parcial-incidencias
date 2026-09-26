@@ -9,7 +9,7 @@ namespace PlataformaIncidencias.Controllers;
 
 [Authorize]
 [Route("Operaciones/Incidencias")]
-public class IncidenciasController(ApplicationDbContext db, IBuscadorIncidencias buscador) : Controller
+public class IncidenciasController(ApplicationDbContext db, IBuscadorIncidencias buscador, ICacheListado cache) : Controller
 {
     private async Task<IReadOnlyList<Incidencia>> ListarAbiertasAsync(CancellationToken cancellationToken) =>
         await db.Incidencias
@@ -23,7 +23,10 @@ public class IncidenciasController(ApplicationDbContext db, IBuscadorIncidencias
     {
         if (string.IsNullOrWhiteSpace(q))
         {
-            var listado = await ListarAbiertasAsync(cancellationToken);
+            var listado = await cache.ObtenerAbiertasAsync(
+                token => ListarAbiertasAsync(token),
+                cancellationToken);
+
             return View(listado);
         }
 
@@ -51,6 +54,8 @@ public class IncidenciasController(ApplicationDbContext db, IBuscadorIncidencias
         incidencia.Estado = EstadoIncidencia.Cerrada;
         incidencia.FechaCierre = DateTime.UtcNow;
         await db.SaveChangesAsync(cancellationToken);
+
+        await cache.InvalidarAsync(cancellationToken);
 
         return RedirectToAction(nameof(Index));
     }
