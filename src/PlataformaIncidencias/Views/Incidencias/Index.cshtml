@@ -11,12 +11,21 @@
     var urlPieSocket = $"wss://{cluster}.piesocket.com/v3/{canalPieSocket}?api_key={clavePieSocket}&notify_self=1";
 }
 
-<h1>Incidencias abiertas</h1>
+<h1>Incidencias abiertas en tiempo real</h1>
 
 <div id="tabla-incidencias"
      data-modo-realtime="@(enProduccion ? "piehost" : "signalr")"
      data-signalr-url="@Url.Content("~/hubs/actualizaciones")"
      data-piesocket-url="@urlPieSocket"
      data-endpoint-datos="@Url.Action("Datos", "Incidencias")">
+    @Html.AntiForgeryToken()
     <partial name="_Tabla" model="Model" />
 </div>
+
+@section Scripts {
+    @if (!enProduccion)
+    {
+        <script src="~/js/signalr.min.js" asp-append-version="true"></script>
+    }
+    <script src="~/js/realtime.js" asp-append-version="true"></script>
+}
