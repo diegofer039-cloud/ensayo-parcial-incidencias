@@ -72,9 +72,12 @@
 
     function aplicarEvento(mensaje) {
         var datos = mensaje && mensaje.data ? mensaje.data : mensaje;
-        if (!datos || datos.id == null) return;
+        if (!datos) return;
 
-        var id = Number(datos.id);
+        var idCrudo = datos.id != null ? datos.id : datos.Id;
+        if (idCrudo == null) return;
+
+        var id = Number(idCrudo);
         var estado = datos.estado || datos.Estado || "";
         var fila = contenedor.querySelector('tr[data-id="' + id + '"]');
 

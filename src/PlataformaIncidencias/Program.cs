@@ -91,7 +91,9 @@ static void RegistrarIntegraciones(IServiceCollection servicios, IConfiguration 
         cliente.Timeout = TimeSpan.FromSeconds(5);
     });
 
-    servicios.AddSingleton<IConnectionMultiplexer>(_ => ConnectionMultiplexer.Connect(cadenaRedis));
+    var opcionesRedis = ConfigurationOptions.Parse(cadenaRedis);
+    opcionesRedis.AbortOnConnectFail = false;
+    servicios.AddSingleton<IConnectionMultiplexer>(_ => ConnectionMultiplexer.Connect(opcionesRedis));
     servicios.AddScoped<ICacheListado, CacheRedis>();
 
     servicios.AddHttpClient<INotificadorEnTiempoReal, NotificadorPieHost>(cliente =>
