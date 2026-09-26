@@ -1,0 +1,22 @@
+@model IReadOnlyList<Incidencia>
+@inject IConfiguration Configuracion
+@{
+    ViewData["Title"] = "Incidencias";
+
+    var modo = (Configuracion["Integrations:Modo"] ?? "local").Trim();
+    var enProduccion = string.Equals(modo, "real", StringComparison.OrdinalIgnoreCase);
+    var cluster = Configuracion["PieHost:Cluster"] ?? "free.blr2";
+    var clavePieSocket = Configuracion["PieHost:Key"] ?? string.Empty;
+    var canalPieSocket = Configuracion["PieHost:Channel"] ?? "incidencias";
+    var urlPieSocket = $"wss://{cluster}.piesocket.com/v3/{canalPieSocket}?api_key={clavePieSocket}&notify_self=1";
+}
+
+<h1>Incidencias abiertas</h1>
+
+<div id="tabla-incidencias"
+     data-modo-realtime="@(enProduccion ? "piehost" : "signalr")"
+     data-signalr-url="@Url.Content("~/hubs/actualizaciones")"
+     data-piesocket-url="@urlPieSocket"
+     data-endpoint-datos="@Url.Action("Datos", "Incidencias")">
+    <partial name="_Tabla" model="Model" />
+</div>

@@ -1,0 +1,46 @@
+@model IReadOnlyList<Incidencia>
+
+<table class="table table-striped table-hover align-middle">
+    <thead>
+        <tr>
+            <th>Id</th>
+            <th>Estación</th>
+            <th>Descripción</th>
+            <th>Prioridad</th>
+            <th>Estado</th>
+            <th>Fecha</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody id="cuerpo-incidencias">
+    @if (Model.Count == 0)
+    {
+        <tr>
+            <td colspan="7" class="text-center text-muted">No hay incidencias abiertas.</td>
+        </tr>
+    }
+    @foreach (var incidencia in Model)
+    {
+        <tr data-id="@incidencia.Id" data-estado="@incidencia.Estado">
+            <td>@incidencia.Id</td>
+            <td>@incidencia.Estacion</td>
+            <td>@incidencia.Descripcion</td>
+            <td>@incidencia.Prioridad</td>
+            <td>
+                <span class="badge @(incidencia.Estado == EstadoIncidencia.Abierta ? "bg-success" : "bg-secondary")">
+                    @incidencia.Estado
+                </span>
+            </td>
+            <td>@incidencia.Fecha.ToLocalTime().ToString("g")</td>
+            <td class="text-end">
+                @if (incidencia.Estado == EstadoIncidencia.Abierta)
+                {
+                    <form asp-action="Cerrar" asp-route-id="@incidencia.Id" method="post" class="d-inline">
+                        <button type="submit" class="btn btn-sm btn-outline-danger">Cerrar</button>
+                    </form>
+                }
+            </td>
+        </tr>
+    }
+    </tbody>
+</table>

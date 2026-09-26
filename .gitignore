@@ -1,0 +1,13 @@
+bin/
+obj/
+*.user
+*.db
+*.db-shm
+*.db-wal
+appsettings.Development.json
+.vs/
+.idea/
+node_modules/
+proceso.pid
+salida.log
+salida.err.log
