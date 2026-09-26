@@ -9,8 +9,12 @@ namespace PlataformaIncidencias.Controllers;
 
 [Authorize]
 [Route("Operaciones/Incidencias")]
-public class IncidenciasController(ApplicationDbContext db, INotificadorEnTiempoReal notificador, ILogger<IncidenciasController> registro)
-    : Controller
+public class IncidenciasController(
+    ApplicationDbContext db,
+    IBuscadorIncidencias buscador,
+    ICacheListado cache,
+    INotificadorEnTiempoReal notificador,
+    ILogger<IncidenciasController> registro) : Controller
 {
     private async Task<IReadOnlyList<Incidencia>> ListarAbiertasAsync(CancellationToken cancellationToken) =>
         await db.Incidencias
@@ -20,10 +24,26 @@ public class IncidenciasController(ApplicationDbContext db, INotificadorEnTiempo
             .ToListAsync(cancellationToken);
 
     [HttpGet("")]
-    public async Task<IActionResult> Index(CancellationToken cancellationToken)
+    public async Task<IActionResult> Index(string? q, CancellationToken cancellationToken)
     {
-        var listado = await ListarAbiertasAsync(cancellationToken);
-        return View(listado);
+        if (string.IsNullOrWhiteSpace(q))
+        {
+            var listado = await cache.ObtenerAbiertasAsync(
+                token => ListarAbiertasAsync(token),
+                cancellationToken);
+
+            return View(listado);
+        }
+
+        var ids = await buscador.BuscarIdsAsync(q, cancellationToken);
+        var encontradas = await db.Incidencias
+            .Where(i => ids.Contains(i.Id) && i.Estado == EstadoIncidencia.Abierta)
+            .OrderBy(i => i.Fecha)
+            .ThenBy(i => i.Id)
+            .ToListAsync(cancellationToken);
+
+        ViewData["q"] = q;
+        return View(encontradas);
     }
 
     [HttpGet("datos")]
@@ -55,6 +75,8 @@ public class IncidenciasController(ApplicationDbContext db, INotificadorEnTiempo
         incidencia.Estado = EstadoIncidencia.Cerrada;
         incidencia.FechaCierre = DateTime.UtcNow;
         await db.SaveChangesAsync(cancellationToken);
+
+        await cache.InvalidarAsync(cancellationToken);
 
         try
         {

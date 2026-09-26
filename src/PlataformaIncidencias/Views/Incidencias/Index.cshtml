@@ -9,9 +9,28 @@
     var clavePieSocket = Configuracion["PieHost:Key"] ?? string.Empty;
     var canalPieSocket = Configuracion["PieHost:Channel"] ?? "incidencias";
     var urlPieSocket = $"wss://{cluster}.piesocket.com/v3/{canalPieSocket}?api_key={clavePieSocket}&notify_self=1";
+    var textoBusqueda = ViewData["q"] as string;
 }
 
 <h1>Incidencias abiertas en tiempo real</h1>
+
+<form asp-action="Index" method="get" class="row g-2 mb-3">
+    <div class="col-sm-7 col-md-8">
+        <input type="text"
+               name="q"
+               value="@textoBusqueda"
+               class="form-control"
+               placeholder="Buscar por estación o descripción"
+               aria-label="Buscar por estación o descripción" />
+    </div>
+    <div class="col-sm-5 col-md-4 d-flex gap-2">
+        <button type="submit" class="btn btn-primary">Buscar</button>
+        @if (!string.IsNullOrWhiteSpace(textoBusqueda))
+        {
+            <a asp-action="Index" class="btn btn-outline-secondary">Limpiar</a>
+        }
+    </div>
+</form>
 
 <div id="tabla-incidencias"
      data-modo-realtime="@(enProduccion ? "piehost" : "signalr")"
