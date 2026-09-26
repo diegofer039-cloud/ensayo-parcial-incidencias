@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using PlataformaIncidencias.Data;
@@ -8,6 +9,22 @@ using PlataformaIncidencias.Services.Real;
 using StackExchange.Redis;
 
 var builder = WebApplication.CreateBuilder(args);
+
+var puertoRender = Environment.GetEnvironmentVariable("PORT");
+if (int.TryParse(puertoRender, out var puerto) && puerto > 0)
+{
+    builder.WebHost.ConfigureKestrel(opciones => opciones.ListenAnyIP(puerto));
+}
+
+builder.Services.Configure<ForwardedHeadersOptions>(opciones =>
+{
+    opciones.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+#pragma warning disable ASPDEPR005
+    opciones.KnownNetworks.Clear();
+#pragma warning restore ASPDEPR005
+    opciones.KnownIPNetworks.Clear();
+    opciones.KnownProxies.Clear();
+});
 
 var cadenaConexion = builder.Configuration.GetConnectionString("DefaultConnection")
     ?? throw new InvalidOperationException("Falta la cadena de conexión 'DefaultConnection'.");
@@ -30,6 +47,8 @@ builder.Services.AddMemoryCache();
 RegistrarIntegraciones(builder.Services, builder.Configuration);
 
 var app = builder.Build();
+
+app.UseForwardedHeaders();
 
 if (app.Environment.IsDevelopment())
 {

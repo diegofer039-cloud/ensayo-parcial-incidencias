@@ -1,0 +1,32 @@
+services:
+  - type: web
+    name: plataforma-incidencias
+    runtime: docker
+    region: oregon
+    plan: free
+    branch: main
+    autoDeploy: true
+    healthCheckPath: /
+    envVars:
+      - key: ASPNETCORE_ENVIRONMENT
+        value: Production
+      - key: ConnectionStrings__DefaultConnection
+        value: DataSource=/tmp/app.db;Cache=Shared
+      - key: Integrations__Modo
+        value: real
+      - key: Algolia__Indice
+        value: incidencias
+      - key: Algolia__ApplicationId
+        sync: false
+      - key: Algolia__AdminApiKey
+        sync: false
+      - key: Redis__ConnectionString
+        sync: false
+      - key: PieHost__Cluster
+        value: free.blr2
+      - key: PieHost__Channel
+        value: incidencias
+      - key: PieHost__Key
+        sync: false
+      - key: PieHost__Secret
+        sync: false
