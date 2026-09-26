@@ -12,7 +12,7 @@
     var textoBusqueda = ViewData["q"] as string;
 }
 
-<h1>Incidencias abiertas con consulta rápida</h1>
+<h1>Incidencias abiertas en tiempo real</h1>
 
 <form asp-action="Index" method="get" class="row g-2 mb-3">
     <div class="col-sm-7 col-md-8">
@@ -37,5 +37,14 @@
      data-signalr-url="@Url.Content("~/hubs/actualizaciones")"
      data-piesocket-url="@urlPieSocket"
      data-endpoint-datos="@Url.Action("Datos", "Incidencias")">
+    @Html.AntiForgeryToken()
     <partial name="_Tabla" model="Model" />
 </div>
+
+@section Scripts {
+    @if (!enProduccion)
+    {
+        <script src="~/js/signalr.min.js" asp-append-version="true"></script>
+    }
+    <script src="~/js/realtime.js" asp-append-version="true"></script>
+}
